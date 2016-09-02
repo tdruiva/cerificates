@@ -7,7 +7,6 @@ from subprocess import Popen, PIPE
 
 class Certificate:
   def __init__(self, name):
-    OUT_DIR = '/home/user1/Projects/certificates/to_print'
     svg_filename = 'certificate.svg'
     svg_file = codecs.open(svg_filename, "rb", "utf8")
 
@@ -15,22 +14,26 @@ class Certificate:
 
     content = svg_content.replace("%%NOMBRE%%", name.decode('utf-8'))
 
-    normalized_name = self._normalize_name(name)
-    self.in_file = os.path.join("/tmp", normalized_name + ".svg")
+    self.normalized_name = self._normalize_name(name)
+    self.in_file = os.path.join("/tmp", self.normalized_name + ".svg")
     tmp_file = codecs.open(self.in_file, "w", "utf8")
     tmp_file.write(content)
     tmp_file.close()
 
-    self.out_file = os.path.join(OUT_DIR + '/pdf', normalized_name + ".pdf")
 
   def _normalize_name(self, name):
     return re.sub(r"\W+", '_', name).strip().lower()[:30]
 
   def as_pdf(self):
     inkscape = '/usr/bin/inkscape'
-    p = Popen([inkscape, '-z', '-f', self.in_file, '-A', self.out_file], stdin=PIPE, stdout=PIPE)
+    output_dir = os.getcwd() + '/to_print/pdf'
+    if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+
+    out_file = os.path.join(output_dir, self.normalized_name + ".pdf")
+    p = Popen([inkscape, '-z', '-f', self.in_file, '-A', out_file], stdin=PIPE, stdout=PIPE)
     p.wait()
-    return self.out_file
+    return out_file
 
 
 CSV_PATH = 'names_to_print.csv'
